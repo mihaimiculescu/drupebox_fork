@@ -48,6 +48,7 @@ def action_folder(remote_folder_path):
 
             if is_file(remote_item):
                 download_file(remote_file_path, local_file_path)
+
             else:
                 create_local_folder(remote_file_path, local_file_path)
 
