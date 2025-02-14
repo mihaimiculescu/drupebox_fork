@@ -1,3 +1,5 @@
+#### work in progress - addressing the ownership issue - currently the script doesn't allow syncing files/folders not owned by the current user
+
 # Drupebox
 Drupebox is a Dropbox sync app built for the Raspberry Pi.
 
