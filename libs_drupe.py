@@ -19,13 +19,12 @@ local_file_path -> posix format, no trailing slash
 local_folder_path -> posix format, no trailing slash
 """
 def get_file_users_perms(path):
+    path = '/'+ path
     st = os.stat(path)
     mode = stat.S_IMODE(st.st_mode)
     user = pwd.getpwuid(st.st_uid).pw_name
     group = grp.getgrgid(st.st_gid).gr_name
     return user, group, oct(mode)
-
-users_perms = tuple[0 , 0 , 0] 
 
 
 def note(text):
@@ -98,7 +97,7 @@ def get_config_real():
     if not path_exists(path_join(home, ".config")):
         os.makedirs(path_join(home, ".config"))
     config_filename = path_join(home, ".config", "drupebox")
-    if path_exists(config_filename):
+    if not path_exists(config_filename):
         # First time only
         config = ConfigObj()
         config.filename = config_filename
@@ -248,50 +247,41 @@ def create_remote_folder(remote_file_path):
     print("ccc", remote_file_path)
     db_client.files_create_folder(remote_file_path)
 
-
 def create_local_folder(remote_file_path, local_file_path):
     print("ccc", remote_file_path)
     if not path_exists(local_file_path):
         containing_folder = get_containing_folder_path(local_file_path)
-        users_perms.mode = get_file_users_perms(containing_folder).mode
-        users_perms.user = get_file_users_perms(containing_folder).user
-        users_perms.group = get_file_users_perms(containing_folder).group
+        user, group, mode = get_file_users_perms(containing_folder)
         os.makedirs(local_file_path)
-        os.chown(local_file_path, users_perms.user, users_perms.group)
-        os.chmod(local_file_path, users_perms.mode)
+        os.chown(local_file_path, pwd.getpwnam(user).pw_uid, grp.getgrnam(group).gr_gid)
+        os.chmod(local_file_path, int(mode, 8))
     else:
-        "Modification time on a folder does not matter - no action"
+        print("Modification time on a folder does not matter - no action")
 
 def download_file(remote_file_path, local_file_path):
     print("ddd", remote_file_path)
     if os.path.exists(local_file_path):
         # remember ownership and permissions before removing
-        users_perms.mode = get_file_users_perms(local_file_path).mode
-        users_perms.user = get_file_users_perms(local_file_path).user
-        users_perms.group = get_file_users_perms(local_file_path).group
-        send2trash(
-            system_slash(local_file_path)
-        )  # so no files permanently deleted locally
+        user, group, mode = get_file_users_perms(local_file_path)
+        send2trash(system_slash(local_file_path))  # so no files permanently deleted locally
     else:
         # determine from peers in the same folder, if any
         containing_folder = get_containing_folder_path(local_file_path)
-        for item in os.listdir(containing_folder):
-            item_path = os.path.join(containing_folder, item)
+        user, group, mode = None, None, None  # Initialize variables
+        for item in os.listdir('/' + containing_folder):
+            item_path = os.path.join(('/' + containing_folder), item)
             if os.path.isfile(item_path):
-                users_perms.mode = get_file_users_perms(item_path).mode
-                users_perms.user = get_file_users_perms(item_path).user
-                users_perms.group = get_file_users_perms(item_path).group
+                user, group, mode = get_file_users_perms(item_path)
                 break
-            else:
+        if user is None or group is None or mode is None:
             # otherwise, inherit user and group from enclosing folder and assume 0o644 as permissions
-                users_perms.mode = 0o644
-                users_perms.user = get_file_users_perms(containing_folder).user
-                users_perms.group = get_file_users_perms(containing_folder).group
+            user, group, mode = get_file_users_perms(containing_folder)
+            mode = oct (0o644)
 
     db_client.files_download_to_file(local_file_path, remote_file_path)
-    os.chown(local_file_path, users_perms.user, users_perms.group)
-    os.chmod(local_file_path, users_perms.mode)
-    fix_local_time(remote_file_path)
+    os.chown(local_file_path, pwd.getpwnam(user).pw_uid, grp.getgrnam(group).gr_gid)
+    os.chmod(local_file_path, int(mode, 8))
+    fix_local_time(remote_file_path)                
 
 def local_delete(local_file_path):
     remote_file_path = get_remote_file_path_of_local_file_path(local_file_path)
