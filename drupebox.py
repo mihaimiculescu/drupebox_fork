@@ -97,8 +97,10 @@ print("Drupebox sync started at", readable_time(time.time()))
 remotely_deleted_files = determine_remotely_deleted_files()
 action_locally_deleted_files()
 
+
 fyi("Syncing all other local and remote files changes")
 action_folder("")
+
 
 save_last_state()
 store_tree(get_live_tree())

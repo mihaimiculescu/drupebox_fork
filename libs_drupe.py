@@ -11,7 +11,6 @@ from send2trash import send2trash
 from datetime import datetime, timezone
 from configobj import ConfigObj
 
-
 """
 Variables in the following fomrats
 remote_file_path -> dropbox format
