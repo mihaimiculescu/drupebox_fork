@@ -53,6 +53,7 @@ cd ~
 * Run `sudo python3 drupebox/drupebox.py`. It will take you again through the authorisation process, as described above. <br>
 Make sure to provide the **same** sync folder as you did originally, providing the **full** path, with ending slash **/**. <br>
 Example: if your sync folder is `/home/<your_user_name>/Dropbox/` type it as such.
+* If you run Drupebox from a cron job, remember to update it by prefixing with `sudo` the relevant line.
 
 Drupebox also supports other linux environments whose distros support sudo.
 
